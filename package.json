@@ -1,0 +1,10 @@
+{
+  "name": "application-name",
+  "version": "0.0.1",
+  "dependencies": {
+    "body-parser": "latest",
+    "express": "latest",
+    "express-session": "^1.14.0",
+    "morgan": "^1.7.0"
+  }
+}
