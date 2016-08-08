@@ -7,10 +7,8 @@ var express = require ('express') ;
 var bodyParser = require ('body-parser');
 var app =express();
 var morgan = require( 'morgan');
-
-var dataBase ={};
-function enableDataBase()
-{
+var dataBase = {};
+function enableDataBase() {
     fs.readFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json" , function( err , data){
         if (err) {console.log(err);}
         else {
@@ -18,27 +16,25 @@ function enableDataBase()
         }
     });
 }
-
-function saveDataBase()
-{
+function saveDataBase() {
     fs.writeFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json", JSON.stringify(dataBase) , function( err){
         if (err) {console.log(err);}
     });
 }
+var comment = [];
+
 
 app.use(session({secret : "secret", resave : false , saveUninitialized : true }));
 app.use(morgan("dev"));
 app.use(express.static(__dirname + "/static"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended:true}));
-//app.use(bodyParser());
 
-//var users = {sara : "love"};
 
-app.use ("/", function (req, res, next) {
-    //console.log(dataBase.toString());
-    next();
+app.get("/", function (req, res, next) {
+    res.sendFile(__dirname + "/static/home.html");
 });
+
 
 app.post("/login", function (req, res, next) {
     //app.writeHead(200, {"Content-Type" : "text/html"});
@@ -48,7 +44,7 @@ app.post("/login", function (req, res, next) {
     //var i=0
     if (req.session.auth)
     {
-        resp.json({status : false , msg : "You are signed in before" });
+        res.json({status : false , msg : "You are signed in before" });
         return;
     }
     for(var i = 0 ; i < dataBase.numberOfData ; i++)
@@ -59,8 +55,8 @@ app.post("/login", function (req, res, next) {
             {
                 console.log("Enter both ifs.\n");
                 //res.sendFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/login.html");
-                req.session.auth = {username : dataBase}
-                res.json({status: "true", msg: " you are signin now"});
+                req.session.auth = {username : dataBase.Data[i].username};
+                res.json({status: "true", msg: " you are signin now" , auth : {username : dataBase.Data[i].username} });
                 console.log("Signin successful");
                 return;
             }
@@ -80,8 +76,7 @@ app.post("/login", function (req, res, next) {
     console.log("Signin failed");
 });
 
-app.post("/signup" , function (req, res, next)
-{
+app.post("/signup" , function (req, res, next) {
    if (req.body.username && req.body.password.length >= 4 && req.body.first_name && req.body.last_name && req.body.born_year >= 1990 && req.body.born_year<= 2016)
    {
        //var check = false;
@@ -97,7 +92,8 @@ app.post("/signup" , function (req, res, next)
        dataBase.numberOfData++;
        console.log(req.body);
        console.log(dataBase);
-       res.json({ status : true , msg : "Now you are signed up"});
+       req.session.auth ={username : req.body.username};
+       res.json({ status : true , msg : "Now you are signed up" , auth : {username : req.body.username}});
        saveDataBase();
        return;
    }
@@ -110,11 +106,43 @@ app.post("/signup" , function (req, res, next)
    }
 });
 
-app.get("/", function (req, res, next) {
-    res.sendFile(__dirname + "/static/home.html");
+app.post("/postComment" , function (req, res, next) {
+    console.log("Comment came");
+    if (req.session.auth.username)
+    {
+        var t = {};
+        t[req.session.auth.username] = req.body.comment;
+        comment.push(t);
+        //res.json({comments : comment});
+        res.json({status : true , msg : "Your comment submited"});
+    }
+    else
+    {
+        res.json({status : false , msg : "You are not login"});
+    }
 });
+
+app.post("/getinfo", function (req, res, next) {
+    if (req.session.auth) {
+        res.json({status: true, auth: req.session.auth});
+        console.log("in session true");
+    }
+    else{
+        res.json({status: false, auth: req.session.auth});
+        console.log("in session false");
+    }
+});
+
+app.post("/getcomment" , function (req, res, next) {
+    res.json({comments : comment});
+});
+
+app.post("/logout" , function (req, res, next) {
+    delete req.session.auth;
+    res.json({status : true , msg : "You have been loged out"});
+})
+
 
 app.listen(8000);
 enableDataBase();
-console.log(dataBase);
 console.log("here we go...");
