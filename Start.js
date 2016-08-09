@@ -7,19 +7,20 @@ var express = require ('express') ;
 var bodyParser = require ('body-parser');
 var app =express();
 var morgan = require( 'morgan');
+var mongoose = require('mongoose');
+
+
 var dataBase = {};
 function enableDataBase() {
-    fs.readFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json" , function( err , data){
-        if (err) {console.log(err);}
-        else {
-            dataBase = JSON.parse(data);
-        }
-    });
+    //fs.readFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json" , function( err , data){if (err) {console.log(err);} else {dataBase = JSON.parse(data);}});
+    mongoose.connect("mongodb://localhost/firsttry");
+    var db = mongoose.connection ;
+    db.on("error" , function () {console.log("There is an error in connecting to server");});
+    db.once("connected" , function () {console.log("Data base is running...");});
 }
 function saveDataBase() {
-    fs.writeFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json", JSON.stringify(dataBase) , function( err){
-        if (err) {console.log(err);}
-    });
+    //fs.writeFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json", JSON.stringify(dataBase) , function( err){if (err) {console.log(err);}});
+
 }
 var comment = [];
 

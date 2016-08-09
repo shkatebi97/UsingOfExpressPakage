@@ -1,10 +1,11 @@
 {
-  "name": "application-name",
+  "name": "Test-server",
   "version": "0.0.1",
   "dependencies": {
     "body-parser": "latest",
     "express": "latest",
     "express-session": "^1.14.0",
+    "mongoose": "^4.5.8",
     "morgan": "^1.7.0"
   }
 }
