@@ -11,18 +11,55 @@ var mongoose = require('mongoose');
 
 
 var dataBase = {};
+var newUser = [];
+var comment = [];
+var userSchema;
+var User;
+
+
 function enableDataBase() {
     //fs.readFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json" , function( err , data){if (err) {console.log(err);} else {dataBase = JSON.parse(data);}});
     mongoose.connect("mongodb://localhost/firsttry");
     var db = mongoose.connection ;
     db.on("error" , function () {console.log("There is an error in connecting to server");});
     db.once("connected" , function () {console.log("Data base is running...");});
+    userSchema = mongoose.Schema({
+        username : String ,
+        password : String ,
+        first_name : String ,
+        last_name : String ,
+        born_year : String
+    });
+    User = mongoose.model("user" , userSchema);
 }
-function saveDataBase() {
+function saveDataBase(saveUser) {
     //fs.writeFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json", JSON.stringify(dataBase) , function( err){if (err) {console.log(err);}});
-
+    if (saveUser == undefined)
+    {
+        var len = newUser.length;
+        var i=0;
+        for (users in newUser)
+        {
+            users.save(function(err ,user){
+                if (err) {throw err;}
+                i++;
+                if (len === i)
+                {
+                    console.log(i + " new users saved.")
+                }
+            });
+        }
+        //console.log("all new users saved.");
+    }
+    else
+    {
+        saveUser.save(function(err , user){
+            if (err){throw err;}
+            console.log("user " + saveUser.username +" saved.");
+        });
+        //console.log("user " + saveUser.username +" saved.");
+    }
 }
-var comment = [];
 
 
 app.use(session({secret : "secret", resave : false , saveUninitialized : true }));
