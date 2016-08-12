@@ -5,12 +5,12 @@ var fs = require('fs') ;
 var session = require('express-session');
 var express = require ('express') ;
 var bodyParser = require ('body-parser');
-var app =express();
 var morgan = require( 'morgan');
-var mongoose = require('mongoose');
+var dataBase = require('mongoose');
+var app =express();
 
 
-var dataBase = {};
+
 var newUser = [];
 var comment = [];
 var userSchema;
@@ -19,18 +19,20 @@ var User;
 
 function enableDataBase() {
     //fs.readFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json" , function( err , data){if (err) {console.log(err);} else {dataBase = JSON.parse(data);}});
-    mongoose.connect("mongodb://localhost/firsttry");
-    var db = mongoose.connection ;
+    dataBase.connect("mongodb://localhost/firsttry");
+    var db = dataBase.connection ;
     db.on("error" , function () {console.log("There is an error in connecting to server");});
-    db.once("connected" , function () {console.log("Data base is running...");});
-    userSchema = mongoose.Schema({
+    db.once("connected" , function () {
+        console.log("Data base is running...");
+    });
+    userSchema = dataBase.Schema({
         username : String ,
         password : String ,
         first_name : String ,
         last_name : String ,
         born_year : String
     });
-    User = mongoose.model("user" , userSchema);
+    User = dataBase.model("user" , userSchema);
 }
 function saveDataBase(saveUser) {
     //fs.writeFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json", JSON.stringify(dataBase) , function( err){if (err) {console.log(err);}});
@@ -62,6 +64,9 @@ function saveDataBase(saveUser) {
 }
 
 
+enableDataBase();
+
+
 app.use(session({secret : "secret", resave : false , saveUninitialized : true }));
 app.use(morgan("dev"));
 app.use(express.static(__dirname + "/static"));
@@ -75,64 +80,69 @@ app.get("/", function (req, res, next) {
 
 
 app.post("/login", function (req, res, next) {
-    //app.writeHead(200, {"Content-Type" : "text/html"});
-    console.log(req.body);
-    console.log(dataBase.toString());
-    console.log(dataBase[1]);
+    console.log("Enter login function");
+    var body = req.body;
+    console.log(body);
+    //console.log(dataBase.toString());
+    //console.log(dataBase[1]);
     //var i=0
     if (req.session.auth)
     {
         res.json({status : false , msg : "You are signed in before" });
         return;
     }
-    for(var i = 0 ; i < dataBase.numberOfData ; i++)
-    {
-        if (dataBase.Data[i].username == req.body["username"])
-        {
-            if (dataBase.Data[i].password == req.body["password"])
-            {
-                console.log("Enter both ifs.\n");
-                //res.sendFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/login.html");
-                req.session.auth = {username : dataBase.Data[i].username};
-                res.json({status: "true", msg: " you are signin now" , auth : {username : dataBase.Data[i].username} });
-                console.log("Signin successful");
-                return;
-            }
-            else{console.log("Enter first if only.\n");
-                //res.json({status: "false", msg: " you are NOT signin yet because your pass is incorrect."});
-                //return;
-            }
+    console.log(User);
+    User.find({username : body.username , password : body.password} , function(err , data){
+        //res.sendFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/login.html");
+        if(data) {
+            req.session.auth = {username: body.username};
+            console.log("Signin successful");
+            res.json({status: "true", msg: " you are signin now", auth: {username: body.username}});
+            return;
         }
-        else
-        {
-            console.log("Do NOT enter any if.\n");
-            //res.json({status: "false", msg: " you are NOT signin yet because your username is incorrect"});
-            //return;
+        else {
+            console.log("Signin failed");
+            res.json({status: "false", msg: "No such username or password"});
+            return;
         }
-    }
-    res.json({status: "false", msg: " you are NOT signin yet"});
-    console.log("Signin failed");
+    });
 });
 
 app.post("/signup" , function (req, res, next) {
-   if (req.body.username && req.body.password.length >= 4 && req.body.first_name && req.body.last_name && req.body.born_year >= 1990 && req.body.born_year<= 2016)
+    var body = req.body;
+    console.log("post arrived");
+   if (body.username && body.password.length >= 4 && body.first_name && body.last_name && body.born_year >= 1990 && body.born_year<= 2016)
    {
+       console.log("Enter the if");
        //var check = false;
-       for(var i=0 ; i < dataBase.Data.length ; i++)
-       {
-           if (dataBase.Data[i].username === req.body.username)
+       User.find({username : body.username} , function (err, users) {
+           console.log("in find function");
+           if (err){console.log(err);return;}
+           if (users.length)
            {
-               res.json({ status : false , msg : "This Username is not available."});
+               console.log("user found");
+               res.json({status : false , msg : "Username is not available"});
                return;
            }
-       }
-       dataBase.Data.push(req.body);
-       dataBase.numberOfData++;
-       console.log(req.body);
-       console.log(dataBase);
-       req.session.auth ={username : req.body.username};
-       res.json({ status : true , msg : "Now you are signed up" , auth : {username : req.body.username}});
-       saveDataBase();
+           else
+           {
+               console.log("user not find");
+               var newUserT = new User({
+                   username : body.username,
+                   password : body.password.toString(),
+                   first_name : body.first_name,
+                   last_name : body.last_name,
+                   born_year : body.born_year
+                });
+               console.log("new user created");
+               newUser.push(newUserT);
+               console.log("user pushed");
+               console.log(newUser);
+               req.session.auth = {username : body.username};
+               res.json({ status : true , msg : "Now you are signed up" , auth : {username : req.body.username}});
+               saveDataBase(newUserT);
+           }
+       });
        return;
    }
    else
@@ -182,5 +192,4 @@ app.post("/logout" , function (req, res, next) {
 
 
 app.listen(8000);
-enableDataBase();
 console.log("here we go...");

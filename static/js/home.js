@@ -1,6 +1,4 @@
-/**
- * Created by S.H.A.K on 8/5/2016.
- */
+
 $(document).ready(function()
 {
     var session={};
@@ -8,12 +6,14 @@ $(document).ready(function()
     //console.log("Yes");
 
     $("#submit").click(function(){
-        $.post("/login", {username : $("#user").val() , password : $("#pass").val() }, function(data){
+        var username = $("#user").val();
+        var password = $("#pass").val();
+        $.post("/login", { username : username , password : password }, function(data){
             $("#info").append("<p>" + $("#user").val()+ " my love" + data.msg + "</p>");
             if(data.status)
             {
-                session = data.auth;
-                console.log(data.auth.toString());
+                Refresh(data.auth);
+                return;
             }
             Refresh();
         });
@@ -34,13 +34,18 @@ $(document).ready(function()
     $("#signup").click(function (){
         //console.log("Yes again");
         $.post("/signup", { "first_name" : $("#firstname").val() , "last_name" : $("#lastname").val() , "username" : $("#username").val() , "password" : $("#password").val() , "born_year" : $("#bornyear").val() } , function(resp){
-            $("#info").append("<p>" + resp.msg + "</p>");
-            if(data.status)
-            {
-                session = data.auth;
-                //console.log(data.auth.toString());
+            if(status) {
+                $("#info").append("<p>" + resp.msg + "</p>");
+                if (data.status) {
+                    session = data.auth;
+                    //console.log(data.auth.toString());
+                }
+                Refresh();
             }
-            Refresh();
+            else
+            {
+                $("#info").append("<p>" + resp.msg + "</p>");
+            }
         });
     });
     $("#commentSubmit").click(function () {
@@ -64,26 +69,32 @@ $(document).ready(function()
         Refresh();
     });
 
-    function Refresh() {
-        getInfo();
+    function Refresh(auth) {
+        getInfo(auth);
         getComment();
     };
-    function getInfo() {
-        $.post("/getinfo", {} , function (data) {
-            $("#auth").html((data.auth.username));
-            if (data.status)
-            {
-                //console.log("session is true");
-                session=data.auth;
-                return data.auth;
-            }
-            else
-            {
-                //console.log("session is false");
-                session = {};
-                return {};
-            }
-        });
+    function getInfo(authh) {
+        if (!authh) {
+            $.post("/getinfo", {}, function (data) {
+                if (data.auth) {
+                    $("#auth").html((data.auth.username));
+                    if (data.status) {
+                        //console.log("session is true");
+                        session = data.auth;
+                        return data.auth;
+                    }
+                    else {
+                        //console.log("session is false");
+                        session = {};
+                        return {};
+                    }
+                }
+            });
+        }
+        else
+        {
+            session = auth;
+        }
     };
     function getComment(){
         $("#Comments").html(" ");
