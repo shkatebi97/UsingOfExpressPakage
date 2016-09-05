@@ -5,7 +5,7 @@ $(document).ready(function()
 
     //console.log("Yes");
 
-    $("#submit").click(function(){
+    $("#login").click(function(){
         var username = $("#user").val();
         var password = $("#pass").val();
         $.post("/login", { username : username , password : password }, function(data){
@@ -55,11 +55,12 @@ $(document).ready(function()
         {
             $("#Comments").html(" ");
             //console.log("Enter the if");
+            console.log("Want to post request")
             $.post("/postComment" , {"comment" : $("#comment").val()}, function (data) {
                 Refresh();
                 if (!data.status)
                 {
-                    $("#info").append("<p>" + $("#user").val()+ " my love" + data.msg + "</p>");
+                    $("#info").append("<p>" + session.username + " my love" + data.msg + "</p>");
                 }
             });
 
@@ -98,17 +99,16 @@ $(document).ready(function()
     };
     function getComment(){
         $("#Comments").html(" ");
+        console.log("Want to send request");
         $.post("/getcomment" , {} ,function (data) {
             for(var i=0 ; i < data.comments.length ; i++)
             {
-                console.log("Enter the first for\n");
-                console.log(data.comments.length);
-                for (var atr in data.comments[i])
-                {
-                    console.log("Enter the second for");
-                    console.log(atr);
-                    $("#Comments").append("<h3>" + atr.toString() + ":" + "</h3>\n<p>" + data.comments[i][atr] + "</p>");
-                }
+                //console.log("Enter the first for\n");
+                //console.log(data.comments.length);
+                //console.log("Enter the second for");
+                //console.log(atr);
+                console.log("Request sent and this is the response" , data)
+                $("#Comments").append("<h3>" + data.comments[i].username + ":" + "</h3>\n<p>" + data.comments[i].comment + "</p>");
             }
         });
     };

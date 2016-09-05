@@ -12,9 +12,11 @@ var app =express();
 
 
 var newUser = [];
-var comment = [];
+var newComment = [];
 var userSchema;
+var commentSchema;
 var User;
+var Comment;
 
 
 function enableDataBase() {
@@ -32,7 +34,13 @@ function enableDataBase() {
         last_name : String ,
         born_year : String
     });
+    commentSchema = dataBase.Schema({
+        username : String,
+        comment : String ,
+        like : Number
+    })
     User = dataBase.model("user" , userSchema);
+    Comment =dataBase.model("comment" , commentSchema);
 }
 function saveDataBase(saveUser) {
     //fs.writeFile("C:/Users/S.H.A.K/Desktop/Node.JS/Courses/UsingOfExpressPakage/static/DataBase/DataBase.json", JSON.stringify(dataBase) , function( err){if (err) {console.log(err);}});
@@ -40,18 +48,16 @@ function saveDataBase(saveUser) {
     {
         var len = newUser.length;
         var i=0;
-        for (users in newUser)
-        {
-            users.save(function(err ,user){
+        while(newUser.length){
+            newUser.pop().save(function(err ,user){
                 if (err) {throw err;}
                 i++;
-                if (len === i)
+                if (i === len)
                 {
-                    console.log(i + " new users saved.")
+                    console.log( i + " user saved.\nall user saved.");
                 }
             });
         }
-        //console.log("all new users saved.");
     }
     else
     {
@@ -59,7 +65,24 @@ function saveDataBase(saveUser) {
             if (err){throw err;}
             console.log("user " + saveUser.username +" saved.");
         });
-        //console.log("user " + saveUser.username +" saved.");
+    }
+}
+function saveComment(saveComment , callBack) {
+    if (saveComment === undefined)
+    {
+        var len = newComment.length;
+        var i=0;
+        while(newComment.length){
+            newComment.pop().save(function(err ,user){
+                if (err) {callBack(err);}
+                i++;
+                if (i === len)
+                {
+                    console.log( i + " user saved.\nall user saved.");
+                    callBack();
+                }
+            });
+        }
     }
 }
 
@@ -140,7 +163,7 @@ app.post("/signup" , function (req, res, next) {
                console.log(newUser);
                req.session.auth = {username : body.username};
                res.json({ status : true , msg : "Now you are signed up" , auth : {username : req.body.username}});
-               saveDataBase(newUserT);
+               //saveDataBase(newUserT);
            }
        });
        return;
@@ -156,13 +179,22 @@ app.post("/signup" , function (req, res, next) {
 
 app.post("/postComment" , function (req, res, next) {
     console.log("Comment came");
-    if (req.session.auth.username)
+    var session = req.session;
+    var body = req.body;
+    if (session.auth)
     {
-        var t = {};
-        t[req.session.auth.username] = req.body.comment;
-        comment.push(t);
+        var newCommentT = new Comment({
+            username : session.auth.username,
+            comment : body.comment,
+            like : 0
+        });
+        newComment.push(newCommentT);
+        res.json({status : true , msg : "Your comment submited" , comment : newCommentT.comment});
+        // var t = {};
+        //t[req.session.auth.username] = req.body.comment;
+        //comment.push(t);
         //res.json({comments : comment});
-        res.json({status : true , msg : "Your comment submited"});
+        //res.json({status : true , msg : "Your comment submited"});
     }
     else
     {
@@ -181,12 +213,32 @@ app.post("/getinfo", function (req, res, next) {
     }
 });
 
-app.post("/getcomment" , function (req, res, next) {
-    res.json({comments : comment});
+app.post("/getcomment" , function (req, res, next)  {
+    saveComment(undefined , function(err){
+        if (err){throw err}
+        Comment.find({} ,function (err, comments) {
+            console.log("In callback function");
+            if(err){throw err}
+            if (comments != undefined)
+            {
+                console.log("The comments return");
+                res.json({status : true , msg : "This is the comments" , comments : comments});
+            }
+            else
+            {
+                res.json({ status : false , msg : "NO comment"});
+            }
+        });
+    });
+
+    //res.json({comments : comment});
 });
 
 app.post("/logout" , function (req, res, next) {
     delete req.session.auth;
+    //console.log("save data base will call");
+    //console.log(newUser);
+    saveDataBase();
     res.json({status : true , msg : "You have been loged out"});
 })
 
